@@ -1,4 +1,4 @@
-using Unity.Netcode;
+using FishNet.Managing;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -10,8 +10,18 @@ public class NetworkManagerUI : MonoBehaviour
     [SerializeField] private Button clientButton;
     [SerializeField] private TextMeshProUGUI statusText;
 
+    private NetworkManager _networkManager;
+
     private void Awake()
     {
+        // Mendapatkan referensi komponen NetworkManager FishNet di scene
+        _networkManager = FindAnyObjectByType<NetworkManager>();
+        if (_networkManager == null)
+        {
+            Debug.LogError("NetworkManager (FishNet) tidak ditemukan di dalam Scene!");
+            return;
+        }
+
         // Menambahkan listener event pada tombol UI
         hostButton.onClick.AddListener(OnHostButtonClicked);
         clientButton.onClick.AddListener(OnClientButtonClicked);
@@ -19,9 +29,12 @@ public class NetworkManagerUI : MonoBehaviour
 
     private void OnHostButtonClicked()
     {
-        // Menjalankan fungsi StartHost dari NetworkManager NGO
-        if (NetworkManager.Singleton.StartHost())
+        if (_networkManager != null)
         {
+            // FishNet menjalankan Server dan Client secara bersamaan untuk skenario Host
+            _networkManager.ServerManager.StartConnection();
+            _networkManager.ClientManager.StartConnection();
+
             UpdateUIStatus("Status: Connected as HOST");
         }
         else
@@ -32,9 +45,11 @@ public class NetworkManagerUI : MonoBehaviour
 
     private void OnClientButtonClicked()
     {
-        // Menjalankan fungsi StartClient dari NetworkManager NGO
-        if (NetworkManager.Singleton.StartClient())
+        if (_networkManager != null)
         {
+            // FishNet menjalankan Client untuk terhubung ke alamat IP server
+            _networkManager.ClientManager.StartConnection();
+
             UpdateUIStatus("Status: Connecting as CLIENT...");
         }
         else
