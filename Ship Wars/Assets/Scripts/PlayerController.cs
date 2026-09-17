@@ -1,6 +1,9 @@
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class PlayerController : NetworkBehaviour
 {
@@ -35,6 +38,7 @@ public class PlayerController : NetworkBehaviour
     private float _currentElevation = 15f;
     private float _currentYaw = 0f;
     private bool _isAiming = false;
+    private float _uiMovementInput = 0f;
 
     // Public getters untuk UI HUD
     public float CurrentFuel => _currentFuel.Value;
@@ -110,14 +114,15 @@ public class PlayerController : NetworkBehaviour
     /// <summary>
     /// Memproses pergerakan kapal dan mengonsumsi fuel sesuai GDD.
     /// PERGERAKAN HANYA BISA KANAN / KIRI (HORIZONTAL), TIDAK BISA NAIK / TURUN (VERTICAL).
+    /// Compatible dengan Unity New Input System & Legacy Input.
     /// </summary>
     private void HandleMovementAndFuel()
     {
         // Tahan pergerakan jika sedang aktif aiming joystick
         if (_isAiming) return;
 
-        // Membaca input Horizontal saja (A / D atau Panah Kiri / Kanan)
-        float horizontalInput = Input.GetAxis("Horizontal");
+        // Membaca input Horizontal (A/D atau Panah Kiri/Kanan) secara aman
+        float horizontalInput = GetHorizontalInput();
 
         // Kapal hanya bergerak secara lateral ke kanan/kiri jika masih ada fuel
         if (_currentFuel.Value > 0f && Mathf.Abs(horizontalInput) > 0.01f)
@@ -130,6 +135,53 @@ public class PlayerController : NetworkBehaviour
             float fuelUsed = fuelConsumptionRate * Time.deltaTime;
             ConsumeFuelServerRpc(fuelUsed);
         }
+    }
+
+    /// <summary>
+    /// Menghasilkan input horizontal (-1 sampai 1) dari New Input System, UI, atau Legacy Input.
+    /// </summary>
+    private float GetHorizontalInput()
+    {
+        if (Mathf.Abs(_uiMovementInput) > 0.01f)
+        {
+            return _uiMovementInput;
+        }
+
+        float input = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+                input -= 1f;
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+                input += 1f;
+        }
+
+        if (Mathf.Abs(input) < 0.01f && Gamepad.current != null)
+        {
+            input = Gamepad.current.leftStick.x.ReadValue();
+        }
+#else
+        try
+        {
+            input = Input.GetAxis("Horizontal");
+        }
+        catch
+        {
+            // Fallback safe check
+        }
+#endif
+
+        return input;
+    }
+
+    /// <summary>
+    /// API untuk tombol UI Movement (Kiri/Kanan)
+    /// </summary>
+    public void SetUIMovementInput(float direction)
+    {
+        _uiMovementInput = direction;
     }
 
     /// Dipanggil saat Joystick Tembak mulai DITEKAN (PointerDown).
