@@ -1,10 +1,9 @@
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
+/// PlayerController untuk Ship Wars (FishNet 3D).
 public class PlayerController : NetworkBehaviour
 {
     [Header("Movement & Fuel Settings (GDD)")]
@@ -35,8 +34,10 @@ public class PlayerController : NetworkBehaviour
     private readonly SyncVar<bool> _isMyTurn = new SyncVar<bool>(true);
     private readonly SyncVar<bool> _hasFiredThisTurn = new SyncVar<bool>(false);
 
-    private float _currentElevation = 15f;
-    private float _currentYaw = 0f;
+    // Synchronized Cannon Angles (Agar meriam selaras di layar Host dan Client!)
+    private readonly SyncVar<float> _currentElevation = new SyncVar<float>(15f);
+    private readonly SyncVar<float> _currentYaw = new SyncVar<float>(0f);
+
     private bool _isAiming = false;
     private float _uiMovementInput = 0f;
 
@@ -44,17 +45,14 @@ public class PlayerController : NetworkBehaviour
     public float CurrentFuel => _currentFuel.Value;
     public float MaxFuel => maxFuel;
     public bool IsMyTurn => _isMyTurn.Value;
-    public float CurrentElevation => _currentElevation;
-    public float CurrentYaw => _currentYaw;
+    public float CurrentElevation => _currentElevation.Value;
+    public float CurrentYaw => _currentYaw.Value;
     public bool IsAiming => _isAiming;
 
     public override void OnStartClient()
     {
         base.OnStartClient();
 
-        // -------------------------------------------------------------
-        // MODUL 3: Visual Feedback berdasarkan Kepemilikan (IsOwner)
-        // -------------------------------------------------------------
         if (shipRenderer == null)
         {
             shipRenderer = GetComponentInChildren<Renderer>();
@@ -62,7 +60,6 @@ public class PlayerController : NetworkBehaviour
 
         if (shipRenderer != null)
         {
-            // Player Lokal (Owner) = Hijau | Player Lain (Opponent) = Merah
             if (IsOwner)
             {
                 shipRenderer.material.color = Color.green;
@@ -73,11 +70,26 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        // Sembunyikan trajectory line di awal
+        _currentElevation.OnChange += OnCannonRotationChanged;
+        _currentYaw.OnChange += OnCannonRotationChanged;
+
         if (trajectoryLine != null)
         {
             trajectoryLine.enabled = false;
         }
+
+        ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
+    }
+
+    private void OnDestroy()
+    {
+        _currentElevation.OnChange -= OnCannonRotationChanged;
+        _currentYaw.OnChange -= OnCannonRotationChanged;
+    }
+
+    private void OnCannonRotationChanged(float prev, float next, bool asServer)
+    {
+        ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
     }
 
     public override void OnStartServer()
@@ -88,11 +100,12 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
-        // KUNCI MULTIPLAYER :
-        // Jalankan input & kontrol HANYA jika objek ini milik player lokal
-        if (!IsOwner) return;
+        if (!IsOwner)
+        {
+            ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
+            return;
+        }
 
-        // Cegah aksi jika bukan giliran player atau sudah menembak
         if (!_isMyTurn.Value || _hasFiredThisTurn.Value)
         {
             HideTrajectoryPreview();
@@ -111,34 +124,24 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Memproses pergerakan kapal dan mengonsumsi fuel sesuai GDD.
-    /// PERGERAKAN HANYA BISA KANAN / KIRI (HORIZONTAL), TIDAK BISA NAIK / TURUN (VERTICAL).
-    /// Compatible dengan Unity New Input System & Legacy Input.
-    /// </summary>
     private void HandleMovementAndFuel()
     {
-        // Tahan pergerakan jika sedang aktif aiming joystick
         if (_isAiming) return;
 
-        // Membaca input Horizontal (A/D atau Panah Kiri/Kanan) secara aman
         float horizontalInput = GetHorizontalInput();
 
-        // Kapal hanya bergerak secara lateral ke kanan/kiri jika masih ada fuel
         if (_currentFuel.Value > 0f && Mathf.Abs(horizontalInput) > 0.01f)
         {
-            // Pergerakan menyamping (Right/Left)
             Vector3 moveDirection = transform.right * horizontalInput * moveSpeed * Time.deltaTime;
             transform.position += moveDirection;
 
-            // Konsumsi Fuel berdasarkan pergerakan horizontal
             float fuelUsed = fuelConsumptionRate * Time.deltaTime;
             ConsumeFuelServerRpc(fuelUsed);
         }
     }
 
     /// <summary>
-    /// Menghasilkan input horizontal (-1 sampai 1) dari New Input System, UI, atau Legacy Input.
+    /// Menghasilkan input horizontal (-1 sampai 1) secara aman dari New Input System, UI, atau Legacy Input.
     /// </summary>
     private float GetHorizontalInput()
     {
@@ -149,7 +152,7 @@ public class PlayerController : NetworkBehaviour
 
         float input = 0f;
 
-#if ENABLE_INPUT_SYSTEM
+        // 1. Membaca New Input System (Keyboard)
         if (Keyboard.current != null)
         {
             if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
@@ -158,20 +161,24 @@ public class PlayerController : NetworkBehaviour
                 input += 1f;
         }
 
+        // 2. Membaca New Input System (Gamepad Stick)
         if (Mathf.Abs(input) < 0.01f && Gamepad.current != null)
         {
             input = Gamepad.current.leftStick.x.ReadValue();
         }
-#else
-        try
+
+        // 3. Legacy Input Fallback (Safe check)
+        if (Mathf.Abs(input) < 0.01f)
         {
-            input = Input.GetAxis("Horizontal");
+            try
+            {
+                input = Input.GetAxis("Horizontal");
+            }
+            catch
+            {
+                // Disembunyikan jika Legacy Input dimatikan di Player Settings
+            }
         }
-        catch
-        {
-            // Fallback safe check
-        }
-#endif
 
         return input;
     }
@@ -184,7 +191,6 @@ public class PlayerController : NetworkBehaviour
         _uiMovementInput = direction;
     }
 
-    /// Dipanggil saat Joystick Tembak mulai DITEKAN (PointerDown).
     public void StartAiming()
     {
         if (!IsOwner || !_isMyTurn.Value || _hasFiredThisTurn.Value) return;
@@ -197,17 +203,25 @@ public class PlayerController : NetworkBehaviour
     {
         if (!_isAiming || !IsOwner) return;
 
-        // Update Elevasi Meriam (Sumbu Y Joystick)
-        _currentElevation += joystickInput.y * elevationSpeed * Time.deltaTime;
-        _currentElevation = Mathf.Clamp(_currentElevation, minElevation, maxElevation);
+        float newElevation = Mathf.Clamp(_currentElevation.Value + joystickInput.y * elevationSpeed * Time.deltaTime, minElevation, maxElevation);
+        float newYaw = _currentYaw.Value + joystickInput.x * yawAimSpeed * Time.deltaTime;
 
-        // Update Rotasi Meriam Horizontal (Sumbu X Joystick)
-        _currentYaw += joystickInput.x * yawAimSpeed * Time.deltaTime;
+        ApplyCannonRotation(newElevation, newYaw);
+        UpdateCannonRotationServerRpc(newElevation, newYaw);
+    }
 
-        // Terapkan rotasi pada cannon transform
+    [ServerRpc]
+    private void UpdateCannonRotationServerRpc(float elevation, float yaw)
+    {
+        _currentElevation.Value = elevation;
+        _currentYaw.Value = yaw;
+    }
+
+    private void ApplyCannonRotation(float elevation, float yaw)
+    {
         if (cannonTransform != null)
         {
-            cannonTransform.localRotation = Quaternion.Euler(-_currentElevation, _currentYaw, 0f);
+            cannonTransform.localRotation = Quaternion.Euler(-elevation, yaw, 0f);
         }
     }
 

@@ -5,11 +5,6 @@ using FishNet.Object;
 using FishNet.Transporting;
 using UnityEngine;
 
-/// <summary>
-/// PlayerSpawner untuk Ship Wars menggunakan FishNet.
-/// Bertanggung jawab men-spawn Player 1 dan Player 2 di posisi bertentangan (Opposing Spawn Points)
-/// saat client terhubung ke server/host.
-/// </summary>
 public class PlayerSpawner : MonoBehaviour
 {
     [Header("Player Prefab (Must have NetworkObject)")]
