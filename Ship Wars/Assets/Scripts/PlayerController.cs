@@ -20,6 +20,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private float firePower = 22f;
+    [SerializeField] private ParticleSystem muzzleFlashVFX;
 
     [Header("Trajectory Preview Arc (GDD)")]
     [SerializeField] private LineRenderer trajectoryLine;
@@ -40,6 +41,7 @@ public class PlayerController : NetworkBehaviour
 
     private bool _isAiming = false;
     private float _uiMovementInput = 0f;
+    private AimJoystickUI _aimJoystick;
 
     // Public getters untuk UI HUD
     public float CurrentFuel => _currentFuel.Value;
@@ -63,6 +65,12 @@ public class PlayerController : NetworkBehaviour
             if (IsOwner)
             {
                 shipRenderer.material.color = Color.green;
+                // Otomatis mencari Joystick UI untuk player ini
+                _aimJoystick = FindAnyObjectByType<AimJoystickUI>();
+                if (_aimJoystick != null)
+                {
+                    _aimJoystick.SetPlayer(this);
+                }
             }
             else
             {
@@ -122,6 +130,26 @@ public class PlayerController : NetworkBehaviour
         {
             HideTrajectoryPreview();
         }
+
+        // Pemicuan aksi tembak menggunakan Klik Kiri / Tombol Space
+        if (Input.GetButtonDown("Fire1") || Input.GetKeyDown(KeyCode.Space))
+        {
+            ShootWithSpace();
+        }
+    }
+
+    private void ShootWithSpace()
+    {
+        if (!IsOwner || _hasFiredThisTurn.Value) return;
+
+        _isAiming = false;
+        HideTrajectoryPreview();
+
+        Vector3 spawnPos = firePoint != null ? firePoint.position : (cannonTransform != null ? cannonTransform.position : transform.position + transform.forward * 2f);
+        Quaternion spawnRot = firePoint != null ? firePoint.rotation : (cannonTransform != null ? cannonTransform.rotation : transform.rotation);
+        Vector3 launchVelocity = (firePoint != null ? firePoint.forward : (cannonTransform != null ? cannonTransform.forward : transform.forward)) * firePower;
+
+        FireShotServerRpc(spawnPos, spawnRot, launchVelocity);
     }
 
     private void HandleMovementAndFuel()
@@ -132,7 +160,8 @@ public class PlayerController : NetworkBehaviour
 
         if (_currentFuel.Value > 0f && Mathf.Abs(horizontalInput) > 0.01f)
         {
-            Vector3 moveDirection = transform.right * horizontalInput * moveSpeed * Time.deltaTime;
+            // Mengubah pergerakan menjadi sumbu Z (-/+ Z)
+            Vector3 moveDirection = Vector3.forward * horizontalInput * moveSpeed * Time.deltaTime;
             transform.position += moveDirection;
 
             float fuelUsed = fuelConsumptionRate * Time.deltaTime;
@@ -294,6 +323,19 @@ public class PlayerController : NetworkBehaviour
         }
 
         Debug.Log($"[Server] Player {OwnerId} fired a shot!");
+
+        // Minta semua Client untuk memutar efek visual & suara tembakan
+        // PlayShootEffectsClientRpc();
+    }
+
+    [ObserversRpc]
+    private void PlayShootEffectsClientRpc()
+    {
+        // Putar efek partikel di lokasi tembakan jika ada
+        if (muzzleFlashVFX != null)
+        {
+            muzzleFlashVFX.Play();
+        }
     }
 
     [Server]

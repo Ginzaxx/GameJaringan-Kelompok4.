@@ -20,6 +20,16 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
         {
             joystickBackground = GetComponent<RectTransform>();
         }
+
+        if (joystickHandle == null)
+        {
+            // Coba cari child dengan nama "Handle" secara otomatis
+            Transform handleChild = transform.Find("Handle");
+            if (handleChild != null)
+            {
+                joystickHandle = handleChild.GetComponent<RectTransform>();
+            }
+        }
     }
 
     private void Update()
@@ -31,24 +41,13 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
         }
     }
 
-    private void FindLocalPlayer()
+    public void SetPlayer(PlayerController player)
     {
-        if (_localPlayerController != null && _localPlayerController.IsOwner) return;
-
-        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (var player in players)
-        {
-            if (player.IsOwner)
-            {
-                _localPlayerController = player;
-                break;
-            }
-        }
+        _localPlayerController = player;
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        FindLocalPlayer();
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             joystickBackground,

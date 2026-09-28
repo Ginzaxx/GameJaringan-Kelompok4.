@@ -64,6 +64,13 @@ public class HealthManager : NetworkBehaviour
     [ServerRpc]
     private void TakeDamageServerRpc(int damageAmount)
     {
-        _health.Value = Mathf.Max(0, _health.Value - damageAmount);
+        TakeDamage(damageAmount);
+    }
+
+    // Method publik untuk menerima damage (dieksekusi di Server)
+    [Server]
+    public void TakeDamage(int amount)
+    {
+        _health.Value = Mathf.Max(0, _health.Value - amount);
     }
 }
