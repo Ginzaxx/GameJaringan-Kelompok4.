@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5380908284368896986}
   - component: {fileID: 3904068839357780924}
   - component: {fileID: 8920743544471891138}
+  - component: {fileID: 2194983359503714791}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -53,9 +54,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c978094af6a360b4ea5bb062f7638919, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 4754669174470161768}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 4754669174470161768}
   moveSpeed: 5
   maxFuel: 50
   fuelConsumptionRate: 10
@@ -90,7 +91,11 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 1713127331494367643}
+  - {fileID: 8671580037247322308}
+  - {fileID: 3904068839357780924}
+  - {fileID: 8920743544471891138}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -101,7 +106,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584110089178618363
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -120,15 +125,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 8
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 13406144721727357288
+  <AssetPathHash>k__BackingField: 2092870565765373345
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
 --- !u!114 &8671580037247322308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,9 +146,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.NetworkTransform
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 4754669174470161768}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 4754669174470161768}
   _componentConfiguration: 0
   _synchronizeParent: 1
   _packing:
@@ -202,9 +207,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e497093faf7f7e4bbbe03539cb53da4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
-  _componentIndexCache: 255
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 4754669174470161768}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 4754669174470161768}
   scoreText: {fileID: 0}
   currentScoreDebug: 0
 --- !u!114 &8920743544471891138
@@ -219,11 +224,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e94bb9a5591db14694e78f0d16695c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthManager
-  _componentIndexCache: 255
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 4754669174470161768}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 4754669174470161768}
   healthSlider: {fileID: 0}
   currentHealthDebug: 100
+--- !u!136 &2194983359503714791
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127896655038441788}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 1
+  m_Height: 3
+  m_Direction: 2
+  m_Center: {x: 0.75, y: 0, z: 0}
 --- !u!1 &2517425029002199292
 GameObject:
   m_ObjectHideFlags: 0
