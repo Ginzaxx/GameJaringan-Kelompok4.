@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 4754669174470161768}
   - component: {fileID: 8671580037247322308}
   - component: {fileID: 5380908284368896986}
+  - component: {fileID: 8259687547524177542}
+  - component: {fileID: 3994363650856800859}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -118,7 +120,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 2092870565765373345
+  <AssetPathHash>k__BackingField: 10997954889358815689
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
@@ -186,6 +188,40 @@ MonoBehaviour:
   joystickBackground: {fileID: 0}
   joystickHandle: {fileID: 0}
   handleRange: 100
+--- !u!114 &8259687547524177542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127896655038441788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e94bb9a5591db14694e78f0d16695c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthManager
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 4754669174470161768}
+  _networkObjectCache: {fileID: 0}
+  healthSlider: {fileID: 0}
+  currentHealthDebug: 100
+--- !u!114 &3994363650856800859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127896655038441788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e497093faf7f7e4bbbe03539cb53da4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 4754669174470161768}
+  _networkObjectCache: {fileID: 0}
+  scoreText: {fileID: 0}
+  currentScoreDebug: 0
 --- !u!1 &2517425029002199292
 GameObject:
   m_ObjectHideFlags: 0
