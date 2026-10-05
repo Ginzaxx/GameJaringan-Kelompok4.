@@ -121,7 +121,7 @@ public class CannonShoot : NetworkBehaviour
     private void ApplyCannonRotation(float elevation)
     {
         if (cannonTransform != null)
-            cannonTransform.localRotation = Quaternion.Euler(70f + elevation, 0f, 0f);
+            cannonTransform.localRotation = Quaternion.Euler(elevation, 0f, 0f);
     }
 
     public void StopAiming()
