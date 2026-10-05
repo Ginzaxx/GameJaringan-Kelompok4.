@@ -34,23 +34,6 @@ public class PlayerController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-
-        if (shipRenderer == null)
-        {
-            shipRenderer = GetComponentInChildren<Renderer>();
-        }
-
-        if (shipRenderer != null)
-        {
-            if (IsOwner)
-            {
-                shipRenderer.material.color = Color.green;
-            }
-            else
-            {
-                shipRenderer.material.color = Color.red;
-            }
-        }
     }
 
 
