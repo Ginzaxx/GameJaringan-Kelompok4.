@@ -1,3 +1,4 @@
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,40 +11,51 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
     [Header("Joystick Settings")]
     [SerializeField] private float handleRange = 100f;
 
-    private PlayerController _localPlayerController;
+    private CannonShoot _localCannonShoot;
     private Vector2 _inputVector = Vector2.zero;
     private Vector2 _pointerStartPosition;
 
     private void Start()
     {
         if (joystickBackground == null)
-        {
             joystickBackground = GetComponent<RectTransform>();
-        }
 
         if (joystickHandle == null)
         {
-            // Coba cari child dengan nama "Handle" secara otomatis
             Transform handleChild = transform.Find("Handle");
             if (handleChild != null)
-            {
                 joystickHandle = handleChild.GetComponent<RectTransform>();
-            }
         }
     }
 
     private void Update()
     {
-        // Selama joystick sedang di-hold/drag, kirim input 2D joystick secara kontinu ke PlayerController
-        if (_inputVector != Vector2.zero && _localPlayerController != null)
+        // Auto-cari CannonShoot milik local player setiap frame sampai ketemu
+        if (_localCannonShoot == null)
         {
-            _localPlayerController.AimJoystickUpdate(_inputVector);
+            foreach (CannonShoot cs in FindObjectsByType<CannonShoot>(FindObjectsSortMode.None))
+            {
+                NetworkBehaviour nb = cs;
+                if (nb.IsOwner)
+                {
+                    _localCannonShoot = cs;
+                    Debug.Log("[AimJoystickUI] Linked to local player's CannonShoot.");
+                    break;
+                }
+            }
+        }
+
+        // Selama joystick di-drag, kirim input secara kontinu
+        if (_inputVector != Vector2.zero && _localCannonShoot != null)
+        {
+            _localCannonShoot.AimJoystickUpdate(_inputVector);
         }
     }
 
-    public void SetPlayer(PlayerController player)
+    /// <summary>Dipakai jika ingin assign manual dari luar (opsional).</summary>
+    public void SetCannonShoot(CannonShoot cannon)
     {
-        _localPlayerController = player;
+        _localCannonShoot = cannon;
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -56,9 +68,9 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
             out _pointerStartPosition
         );
 
-        if (_localPlayerController != null)
+        if (_localCannonShoot != null)
         {
-            _localPlayerController.StartAiming();
+            _localCannonShoot.StartAiming();
         }
 
         OnDrag(eventData);
@@ -81,9 +93,9 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
                 joystickHandle.anchoredPosition = _inputVector * handleRange;
             }
 
-            if (_localPlayerController != null)
+            if (_localCannonShoot != null)
             {
-                _localPlayerController.AimJoystickUpdate(_inputVector);
+                _localCannonShoot.AimJoystickUpdate(_inputVector);
             }
         }
     }
@@ -97,9 +109,9 @@ public class AimJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, I
             joystickHandle.anchoredPosition = Vector2.zero;
         }
 
-        if (_localPlayerController != null)
+        if (_localCannonShoot != null)
         {
-            _localPlayerController.ConfirmFire();
+            _localCannonShoot.StopAiming();
         }
     }
 }
