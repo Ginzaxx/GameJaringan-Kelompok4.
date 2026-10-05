@@ -58,6 +58,11 @@ public class PlayerController : NetworkBehaviour
     {
         base.OnStartServer();
         _currentFuel.Value = maxFuel;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterPlayer(this);
+        }
     }
 
     private void Update()
