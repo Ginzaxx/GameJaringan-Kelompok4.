@@ -27,11 +27,14 @@ public class CannonShoot : NetworkBehaviour
     public float CurrentElevation => _currentElevation.Value;
     public bool IsAiming => _isAiming;
 
+    private void Awake()
+    {
+        _playerController = GetComponent<PlayerController>();
+    }
+
     public override void OnStartClient()
     {
         base.OnStartClient();
-
-        _playerController = GetComponent<PlayerController>();
 
         _currentElevation.OnChange += OnCannonRotationChanged;
 
@@ -162,6 +165,8 @@ public class CannonShoot : NetworkBehaviour
         if (_playerController != null)
         {
             if (_playerController.HasFiredThisTurn) return;
+
+            // Tandai player sudah menembak di sisi Server
             _playerController.SetHasFiredThisTurnServer();
         }
 
@@ -175,6 +180,13 @@ public class CannonShoot : NetworkBehaviour
         }
 
         Debug.Log($"[Server] Player {OwnerId} fired a shot from CannonShoot!");
+
+        // MEMBERITAHU GAMEMANAGER BAHWA AKSI SELESAI
+        if (GameManager.Instance != null && _playerController != null)
+        {
+            GameManager.Instance.NotifyTurnActionCompleted(_playerController);
+        }
+
         PlayShootEffectsClientRpc();
     }
 
