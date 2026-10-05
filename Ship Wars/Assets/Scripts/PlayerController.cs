@@ -11,21 +11,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float maxFuel = 100f;
     [SerializeField] private float fuelConsumptionRate = 10f; // Fuel terpakai per detik saat bergerak
 
-    [Header("Aiming & Cannon Settings")]
-    [SerializeField] private Transform cannonTransform;
-    [SerializeField] private float elevationSpeed = 40f;   // Kecepatan perubahan elevasi (Sumbu Y Joystick)
-    [SerializeField] private float yawAimSpeed = 60f;      // Kecepatan rotasi horizontal meriam (Sumbu X Joystick)
-    [SerializeField] private float minElevation = 0f;
-    [SerializeField] private float maxElevation = 60f;
-    [SerializeField] private GameObject projectilePrefab;
-    [SerializeField] private Transform firePoint;
-    [SerializeField] private float firePower = 22f;
-    [SerializeField] private ParticleSystem muzzleFlashVFX;
 
-    [Header("Trajectory Preview Arc (GDD)")]
-    [SerializeField] private LineRenderer trajectoryLine;
-    [SerializeField] private int trajectoryResolution = 30;
-    [SerializeField] private float trajectoryTimeStep = 0.1f;
 
     [Header("Visual Feedback (Modul 3)")]
     [SerializeField] private Renderer shipRenderer;
@@ -35,21 +21,15 @@ public class PlayerController : NetworkBehaviour
     private readonly SyncVar<bool> _isMyTurn = new SyncVar<bool>(true);
     private readonly SyncVar<bool> _hasFiredThisTurn = new SyncVar<bool>(false);
 
-    // Synchronized Cannon Angles (Agar meriam selaras di layar Host dan Client!)
-    private readonly SyncVar<float> _currentElevation = new SyncVar<float>(15f);
-    private readonly SyncVar<float> _currentYaw = new SyncVar<float>(0f);
 
-    private bool _isAiming = false;
+
     private float _uiMovementInput = 0f;
-    private AimJoystickUI _aimJoystick;
 
     // Public getters untuk UI HUD
     public float CurrentFuel => _currentFuel.Value;
     public float MaxFuel => maxFuel;
     public bool IsMyTurn => _isMyTurn.Value;
-    public float CurrentElevation => _currentElevation.Value;
-    public float CurrentYaw => _currentYaw.Value;
-    public bool IsAiming => _isAiming;
+    public bool HasFiredThisTurn => _hasFiredThisTurn.Value;
 
     public override void OnStartClient()
     {
@@ -65,101 +45,33 @@ public class PlayerController : NetworkBehaviour
             if (IsOwner)
             {
                 shipRenderer.material.color = Color.green;
-                // Otomatis mencari Joystick UI untuk player ini
-                _aimJoystick = FindAnyObjectByType<AimJoystickUI>();
-                if (_aimJoystick != null)
-                {
-                    _aimJoystick.SetPlayer(this);
-                }
             }
             else
             {
                 shipRenderer.material.color = Color.red;
             }
         }
-
-        _currentElevation.OnChange += OnCannonRotationChanged;
-        _currentYaw.OnChange += OnCannonRotationChanged;
-
-        if (trajectoryLine != null)
-        {
-            trajectoryLine.enabled = false;
-        }
-
-        ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
     }
 
-    private void OnDestroy()
-    {
-        _currentElevation.OnChange -= OnCannonRotationChanged;
-        _currentYaw.OnChange -= OnCannonRotationChanged;
-    }
-
-    private void OnCannonRotationChanged(float prev, float next, bool asServer)
-    {
-        ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
-    }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
         _currentFuel.Value = maxFuel;
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.RegisterPlayer(this);
-        }
     }
 
     private void Update()
     {
-        if (!IsOwner)
+        if (!IsOwner || !_isMyTurn.Value || _hasFiredThisTurn.Value)
         {
-            ApplyCannonRotation(_currentElevation.Value, _currentYaw.Value);
-            return;
-        }
-
-        if (!_isMyTurn.Value || _hasFiredThisTurn.Value)
-        {
-            HideTrajectoryPreview();
             return;
         }
 
         HandleMovementAndFuel();
-
-        if (_isAiming)
-        {
-            UpdateTrajectoryPreview();
-        }
-        else
-        {
-            HideTrajectoryPreview();
-        }
-
-        // Pemicuan aksi tembak menggunakan Klik Kiri / Tombol Space
-        if (Input.GetButtonDown("Fire1") || Input.GetKeyDown(KeyCode.Space))
-        {
-            ShootWithSpace();
-        }
-    }
-
-    private void ShootWithSpace()
-    {
-        if (!IsOwner || _hasFiredThisTurn.Value) return;
-
-        _isAiming = false;
-        HideTrajectoryPreview();
-
-        Vector3 spawnPos = firePoint != null ? firePoint.position : (cannonTransform != null ? cannonTransform.position : transform.position + transform.forward * 2f);
-        Quaternion spawnRot = firePoint != null ? firePoint.rotation : (cannonTransform != null ? cannonTransform.rotation : transform.rotation);
-        Vector3 launchVelocity = (firePoint != null ? firePoint.forward : (cannonTransform != null ? cannonTransform.forward : transform.forward)) * firePower;
-
-        FireShotServerRpc(spawnPos, spawnRot, launchVelocity);
     }
 
     private void HandleMovementAndFuel()
     {
-        if (_isAiming) return;
 
         float horizontalInput = GetHorizontalInput();
 
@@ -225,79 +137,7 @@ public class PlayerController : NetworkBehaviour
         _uiMovementInput = direction;
     }
 
-    public void StartAiming()
-    {
-        if (!IsOwner || !_isMyTurn.Value || _hasFiredThisTurn.Value) return;
 
-        _isAiming = true;
-        UpdateTrajectoryPreview();
-    }
-
-    public void AimJoystickUpdate(Vector2 joystickInput)
-    {
-        if (!_isAiming || !IsOwner) return;
-
-        float newElevation = Mathf.Clamp(_currentElevation.Value + joystickInput.y * elevationSpeed * Time.deltaTime, minElevation, maxElevation);
-        float newYaw = _currentYaw.Value + joystickInput.x * yawAimSpeed * Time.deltaTime;
-
-        ApplyCannonRotation(newElevation, newYaw);
-        UpdateCannonRotationServerRpc(newElevation, newYaw);
-    }
-
-    [ServerRpc]
-    private void UpdateCannonRotationServerRpc(float elevation, float yaw)
-    {
-        _currentElevation.Value = elevation;
-        _currentYaw.Value = yaw;
-    }
-
-    private void ApplyCannonRotation(float elevation, float yaw)
-    {
-        if (cannonTransform != null)
-        {
-            cannonTransform.localRotation = Quaternion.Euler(-elevation, yaw, 0f);
-        }
-    }
-
-    public void ConfirmFire()
-    {
-        if (!_isAiming || !IsOwner || _hasFiredThisTurn.Value) return;
-
-        _isAiming = false;
-        HideTrajectoryPreview();
-
-        Vector3 spawnPos = firePoint != null ? firePoint.position : (cannonTransform != null ? cannonTransform.position : transform.position + transform.forward * 2f);
-        Quaternion spawnRot = firePoint != null ? firePoint.rotation : (cannonTransform != null ? cannonTransform.rotation : transform.rotation);
-        Vector3 launchVelocity = (firePoint != null ? firePoint.forward : (cannonTransform != null ? cannonTransform.forward : transform.forward)) * firePower;
-
-        FireShotServerRpc(spawnPos, spawnRot, launchVelocity);
-    }
-
-    private void UpdateTrajectoryPreview()
-    {
-        if (trajectoryLine == null) return;
-
-        trajectoryLine.enabled = true;
-        trajectoryLine.positionCount = trajectoryResolution;
-
-        Vector3 startPos = firePoint != null ? firePoint.position : (cannonTransform != null ? cannonTransform.position : transform.position + transform.forward * 2f);
-        Vector3 startVelocity = (firePoint != null ? firePoint.forward : (cannonTransform != null ? cannonTransform.forward : transform.forward)) * firePower;
-
-        for (int i = 0; i < trajectoryResolution; i++)
-        {
-            float t = i * trajectoryTimeStep;
-            Vector3 point = startPos + startVelocity * t + 0.5f * Physics.gravity * t * t;
-            trajectoryLine.SetPosition(i, point);
-        }
-    }
-
-    private void HideTrajectoryPreview()
-    {
-        if (trajectoryLine != null)
-        {
-            trajectoryLine.enabled = false;
-        }
-    }
 
     [ServerRpc]
     private void ConsumeFuelServerRpc(float amount)
@@ -305,47 +145,10 @@ public class PlayerController : NetworkBehaviour
         _currentFuel.Value = Mathf.Max(0f, _currentFuel.Value - amount);
     }
 
-    [ServerRpc]
-    private void FireShotServerRpc(Vector3 position, Quaternion rotation, Vector3 velocity)
+    [Server]
+    public void SetHasFiredThisTurnServer()
     {
-        if (_hasFiredThisTurn.Value) return;
-
         _hasFiredThisTurn.Value = true;
-
-        if (projectilePrefab != null)
-        {
-            GameObject proj = Instantiate(projectilePrefab, position, rotation);
-            Rigidbody rb = proj.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-#if UNITY_6000_0_OR_NEWER
-                rb.linearVelocity = velocity;
-#else
-                rb.velocity = velocity;
-#endif
-            }
-            base.Spawn(proj);
-        }
-
-        Debug.Log($"[Server] Player {OwnerId} fired a shot!");
-
-        // Minta semua Client untuk memutar efek visual & suara tembakan
-        // PlayShootEffectsClientRpc();
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.NotifyTurnActionCompleted(this);
-        }
-    }
-
-    [ObserversRpc]
-    private void PlayShootEffectsClientRpc()
-    {
-        // Putar efek partikel di lokasi tembakan jika ada
-        if (muzzleFlashVFX != null)
-        {
-            muzzleFlashVFX.Play();
-        }
     }
 
     [Server]

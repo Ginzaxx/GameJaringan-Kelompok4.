@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3904068839357780924}
   - component: {fileID: 8920743544471891138}
   - component: {fileID: 2194983359503714791}
+  - component: {fileID: 2131308392821333033}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -37,8 +38,6 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6561530682923164440}
-  - {fileID: 7307849638649315472}
-  - {fileID: 8577045293449886612}
   - {fileID: 6908307319589183263}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -60,18 +59,6 @@ MonoBehaviour:
   moveSpeed: 5
   maxFuel: 50
   fuelConsumptionRate: 10
-  cannonTransform: {fileID: 0}
-  elevationSpeed: 40
-  yawAimSpeed: 60
-  minElevation: 0
-  maxElevation: 60
-  projectilePrefab: {fileID: 7704374772066939895, guid: 2ec2ed9033778fb4f807a53ed5f2b474, type: 3}
-  firePoint: {fileID: 7307849638649315472}
-  firePower: 22
-  muzzleFlashVFX: {fileID: 0}
-  trajectoryLine: {fileID: 950579502937935679}
-  trajectoryResolution: 30
-  trajectoryTimeStep: 0.1
   shipRenderer: {fileID: 4349104232343555890}
 --- !u!114 &4754669174470161768
 MonoBehaviour:
@@ -96,6 +83,7 @@ MonoBehaviour:
   - {fileID: 8671580037247322308}
   - {fileID: 3904068839357780924}
   - {fileID: 8920743544471891138}
+  - {fileID: 2131308392821333033}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -106,7 +94,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584110068894411156
+  _initializedTimestamp: -8584103977458155554
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -252,6 +240,32 @@ CapsuleCollider:
   m_Height: 2.4834695
   m_Direction: 2
   m_Center: {x: 0.75, y: 0, z: -0.2582653}
+--- !u!114 &2131308392821333033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127896655038441788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bea07edfdee6664f90080ca88506e27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CannonShoot
+  _componentIndexCache: 4
+  _addedNetworkObject: {fileID: 4754669174470161768}
+  _networkObjectCache: {fileID: 4754669174470161768}
+  cannonTransform: {fileID: 6561530682923164440}
+  elevationSpeed: 1500
+  minElevation: -90
+  maxElevation: 20
+  projectilePrefab: {fileID: 7704374772066939895, guid: 2ec2ed9033778fb4f807a53ed5f2b474, type: 3}
+  firePoint: {fileID: 7307849638649315472}
+  firePower: 22
+  muzzleFlashVFX: {fileID: 0}
+  trajectoryLine: {fileID: 0}
+  trajectoryResolution: 30
+  trajectoryTimeStep: 0.1
 --- !u!1 &2517425029002199292
 GameObject:
   m_ObjectHideFlags: 0
@@ -277,13 +291,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2517425029002199292}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0.7071068, w: 0}
-  m_LocalPosition: {x: 1.458, y: 0.37, z: 0.047599792}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
+  m_LocalPosition: {x: 0, y: 1.38, z: 0}
+  m_LocalScale: {x: 8, y: 8, z: 8}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5547111732802561950}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 180}
+  m_Father: {fileID: 6561530682923164440}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!120 &950579502937935679
 LineRenderer:
   serializedVersion: 3
@@ -418,12 +432,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5121396465955782185}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.25, y: 0.587, z: 1.18}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
+  m_LocalPosition: {x: 0, y: 1.38, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 5547111732802561950}
+  m_Father: {fileID: 6561530682923164440}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7325494924138874677
 GameObject:
@@ -453,10 +467,12 @@ Transform:
   m_GameObject: {fileID: 7325494924138874677}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: 0.5}
-  m_LocalPosition: {x: 0.79, y: 0.587, z: 0.438}
+  m_LocalPosition: {x: 0.867, y: 0.587, z: 0.438}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 7307849638649315472}
+  - {fileID: 8577045293449886612}
   m_Father: {fileID: 5547111732802561950}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
 --- !u!33 &7811324737399706848
