@@ -104,6 +104,11 @@ public class PlayerController : NetworkBehaviour
     {
         base.OnStartServer();
         _currentFuel.Value = maxFuel;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterPlayer(this);
+        }
     }
 
     private void Update()
@@ -326,6 +331,11 @@ public class PlayerController : NetworkBehaviour
 
         // Minta semua Client untuk memutar efek visual & suara tembakan
         // PlayShootEffectsClientRpc();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.NotifyTurnActionCompleted(this);
+        }
     }
 
     [ObserversRpc]
