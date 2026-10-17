@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment variables (berisi secret, jangan di-upload)
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Database lokal (jika memakai SQLite)
+*.sqlite
+*.sqlite3
+*.db
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Coverage / build output
+coverage/
+dist/
