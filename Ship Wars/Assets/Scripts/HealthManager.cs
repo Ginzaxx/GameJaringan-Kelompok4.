@@ -72,5 +72,21 @@ public class HealthManager : NetworkBehaviour
     public void TakeDamage(int amount)
     {
         _health.Value = Mathf.Max(0, _health.Value - amount);
+
+        if (_health.Value <= 0)
+        {
+            Die();
+        }
+    }
+
+    [Server]
+    private void Die()
+    {
+        Debug.Log($"[Server] Player {OwnerId} kehabisan HP dan hancur!");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.CheckWinConditionOnPlayerDeath((ulong)OwnerId);
+        }
     }
 }
